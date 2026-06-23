@@ -126,8 +126,8 @@ if 'carousel_seed' not in st.session_state:
 # ====================================================================
 # 5. USER INTERFACE TAB SYSTEM
 # ====================================================================
-st.markdown("<div class='main-header'>🎯 OTAKULENS AI PRODUCTION SUITE</div>", unsafe_allow_html=True)
-st.markdown("<div class='sub-header'>Hybrid Deep Feature Extraction Pipeline for 2D Illustration Classifications</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-header'>🎯 OTAKULENS AI SUITE</div>", unsafe_allow_html=True)
+st.markdown("<div class='sub-header'>Hybrid(ML+ DL) Deep Feature Extraction Pipeline for 2D Image Classifications</div>", unsafe_allow_html=True)
 
 tab1, tab2, tab3 = st.tabs(["🎮 Active Inference Engine", "📚 Dataset Library Catalog", "🧠 Engineering Intuition & Logs"])
 
@@ -151,22 +151,67 @@ with tab1:
         st.markdown("#### **Step 2: Mathematical Inference Execution**")
         if st.session_state.selected_image_path:
             if st.button("🚀 RUN PRODUCTION PREDICTION", use_container_width=True):
-                with st.spinner("Analyzing deep visual tensors via ResNet-50 Feature Extractor..."):
-                    time.sleep(1.2) # Mimic NPU computation overhead
+                
+                # --- LIVE MODEL INFERENCE BLOCK ---
+                if model_loaded:
+                    with st.spinner("Extracting deep visual vectors using ResNet Backbone..."):
+                        # 1. Load and preprocess image for PyTorch
+                        img = Image.open(st.session_state.selected_image_path).convert('RGB')
+                        preprocess = transforms.Compose([
+                            transforms.Resize((224, 224)),
+                            transforms.ToTensor(),
+                            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                        ])
+                        img_tensor = preprocess(img).unsqueeze(0) # Add batch dim
+                        
+                    with st.spinner("Processing through PCA & XGBoost Tree Nodes..."):
+                        # 2. Extract features using PyTorch ResNet-50
+                        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+                        # Initialize a quick static feature extractor block
+                        resnet = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+                        feature_extractor = torch.nn.Sequential(*list(resnet.children())[:-1]).to(device)
+                        feature_extractor.eval()
+                        
+                        with torch.no_grad():
+                            raw_features = feature_extractor(img_tensor.to(device)).squeeze().cpu().numpy()
+                            raw_features = raw_features.reshape(1, -1)
+                        
+                        # 3. Unpack saved pipeline artifacts
+                        scaler = artifacts["scaler"]
+                        pca = artifacts["pca"]
+                        xgb_model = artifacts["model"]
+                        pipeline_classes = artifacts["class_names"]
+                        
+                        # 4. Math Transformations
+                        scaled_features = scaler.transform(raw_features)
+                        pca_features = pca.transform(scaled_features)
+                        
+                        # 5. Live Prediction
+                        pred_idx = xgb_model.predict(pca_features)[0]
+                        pred_probs = xgb_model.predict_proba(pca_features)[0]
+                        
+                        predicted_name = pipeline_classes[pred_idx]
+                        live_confidence = pred_probs[pred_idx] * 100
                     
-                with st.spinner("Executing PCA Dim-Reduction & XGBoost Leaf Evaluation..."):
-                    time.sleep(0.6)
+                    st.balloons()
+                    st.markdown(f"### **Prediction: `{predicted_name}`**")
+                    st.metric(label="Model Confidence Score", value=f"{live_confidence:.2f}%")
+                    st.progress(float(live_confidence) / 100.0)
                     
-                st.balloons()
-                
-                # Inference Readout Layout
-                st.markdown(f"### **Prediction: `{st.session_state.selected_char_name}`**")
-                
-                char_acc = CHARACTER_ACCURACIES.get(st.session_state.selected_char_name, 85.0)
-                st.metric(label="Target Class Accuracy Baseline", value=f"{char_acc}%")
-                st.progress(char_acc / 100.0)
-                
-                st.markdown(f"✅ **System Diagnostic Status:** High Confidence Feature Alignment. Image vectors successfully match coordinates for **{st.session_state.selected_char_name}**.")
+                else:
+                    # --- FALLBACK SIMULATION LAYER (If .pkl is missing) ---
+                    with st.spinner("Analyzing deep visual tensors (Simulation Mode)..."):
+                        time.sleep(1.0)
+                    st.balloons()
+                    
+                    predicted_name = st.session_state.selected_char_name
+                    char_acc = CHARACTER_ACCURACIES.get(predicted_name, 85.0)
+                    
+                    st.markdown(f"### **Prediction: `{predicted_name}`**")
+                    st.metric(label="Target Class Accuracy Baseline (Static)", value=f"{char_acc}%")
+                    st.progress(float(char_acc) / 100.0)
+                    st.info("ℹ️ Running in visual simulation mode. Place your `.pkl` file in the folder to activate live inference equations.")
+                # --- END OF INFERENCE BLOCK ---             
         else:
             st.warning("Awaiting frame initialization. Please choose an image from the horizontal train conveyor belt below.")
 
@@ -200,7 +245,7 @@ with tab1:
 # --------------------------------------------------------------------
 with tab2:
     st.subheader("📚 Structural Dataset Vault")
-    st.markdown("Filter, audit, and horizontally verify image arrays stored in local data arrays. Shows up to **10 matrix profiles per character row**.")
+    st.markdown("Filter, Check, and horizontally verify image arrays stored in local data arrays.")
     
     target_filter = st.selectbox("🎯 Isolate Database Character Lineage", ["All Characters"] + CLASS_NAMES)
     
@@ -209,7 +254,7 @@ with tab2:
     display_list = CLASS_NAMES if target_filter == "All Characters" else [target_filter]
     
     for char in display_list:
-        st.markdown(f"### 👤 Vector Profiles: **{char}**")
+        st.markdown(f"### 👤 Character Profile: **{char}**")
         char_folder = os.path.join("model/anime_characters", char)
         
         if os.path.exists(char_folder):
@@ -231,54 +276,89 @@ with tab2:
 # TAB 3: INTERVIEW INTUITION & LOGS
 # --------------------------------------------------------------------
 with tab3:
-    st.subheader("🧠 Architect Decision Logs (Interview Cheat-Sheet)")
-    st.markdown("Use this technical breakdown layout to answer recruiter questions about engineering decisions, dataset transformations, and performance increases.")
+    st.markdown("### 🧠 Our Model's Story: The Search for Robustness")
+            
+        # Narrative explanation with a visual focus first
+            
+    st.markdown("""
+        <div class='intuition-card'>
+        #### The Problem: A Tiny Dataset and the Threat of Overfitting
+        Our initial journey into character recognition was tough. We started with a serious disadvantage: **severe overfitting**. The first issue was class imbalance, leading to things like the 'Luffy Anomaly' where the model just guessed the most common class. But the deeper problem was our dataset size. A model can't learn abstract features from just 10-15 images; it just memorizes them. We needed to break that cycle and generate thousands of diverse training examples from our handful of originals. ####
+        </div>
+        """, unsafe_allow_html=True)
 
-    # High-level summary metric blocks
+        # 1. Image Generation 1: Data Augmentation Proof
+        # I will generate a visual tool explaining the benefit of augmenting small datasets.
+    st.markdown("---")
+    st.markdown("#### **🛠️ Step 1: Solving the Data Drought with Massive Augmentation** ####")
+
+        # Visual: Demonstrating how augmentation spreads the training distribution to overlap the test distribution.
+        # Reference: improving image_2.png concepts into a clean, stylized dashboard.
+    cols_aug_proof = st.columns([2, 1])
+    with cols_aug_proof[0]:
+            # PLACEHOLDER FOR GENERATED AUGMENTATION PROOF IMAGE
+        st.image("model/dummy_images/augmentation.png", 
+                    caption="Illustrative proof of how augmentation spreads training data distribution for better robustness.", 
+                    use_container_width=True
+            )
+    with cols_aug_proof[1]:
+            st.markdown("""
+                To fix our 'data drought,' we didn't search for more images; we 'manufactured' them. Our **20-Epoch, High-Intensity Augmentation Loop** takes a raw image and applies a chain of random transformations: strong stretching, severe color distortion, aggressive horizontal flipping, and random gray-scaling.
+
+                **The value is mathematical.** In every loop, the frozen feature extractor processes a *completely unique mathematical signature*. This spreads the probability distribution of our training data, forcing the final classifier to look past simple pixels and color, and instead, find abstract, structural lines that are *actually consistent* across unseen images.
+                """)
+            
+    st.markdown("---")
+
+        # 2. Narrative and Visual 2: Feature Extraction (ResNet)
+    st.markdown("#### **Step 2: Deep Seeing: Why we use the ResNet Backbone**")
+
+    st.markdown("""
+        <div class='intuition-card'>
+        With our augmented features, we needed a powerful eye to analyze them. A simple, custom CNN wouldn't work on 2D art, We needed a professional backbone, pre-trained on millions of real-world objects, that we could adapt. 
+
+        We use the deep **ResNet-18**. By freezing its complex visual weights , we adapted its advanced edge-detection and feature-extraction capability. The Backbone extracts 512 high-dimensional 'deep visual concepts' per image.
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Image Generation 2: Stylized Feature Extraction Diagram
+        # I will generate an illustrative, beautiful diagram showing how ResNet abstracts data through layers.
+    cols_resnet_diag = st.columns([1, 2])
+    with cols_resnet_diag[0]:
+            # PLACEHOLDER FOR GENERATED RESNET DIAGRAM IMAGE
+        st.image(
+                "https://imgs.search.brave.com/cRqw8HJu1BgPUtnvV8MLyQvYx1Gl89Eqjp8D9iQeDXQ/rs:fit:0:180:1:0/g:ce/aHR0cHM6Ly9jZG4u/cHJvZC53ZWJzaXRl/LWZpbGVzLmNvbS82/NDVjZWM2MGZmYjE4/ZDVlYmIzN2RhNGIv/NjVlYjMwM2M5ZWU0/YjY3MTM1NjI4ZTlh/X2FyY2hpLmpwZw", 
+                caption="Sample illustrative diagram showing a ResNet abstraction stack converting raw data to abstract features.", 
+                use_container_width=True
+            )
+    with cols_resnet_diag[1]:
+        st.markdown("""
+                This diagram illustrates how ResNet works: It takes raw pixel arrays (top) and progressively abstracts them through hundreds of layers (middle blocks).
+
+                * **Early layers** detect simple corners, edges, and line weights.
+                * **Middle layers** see shapes like 'circles' or 'eyes'.
+                * **Deep layers** combine everything into abstract concepts: 'spiky hair,' 'straw hat,' or 'scar'. 
+                
+                The problem, however, is that this powerful system sees too much, creating a compressed matrix that is 512 columns wide per image. That's way too noisy for our smart brain to make sense of directly.
+                """)
+
+    st.markdown("---")
+        # 3. Steps 3 & 4 (Combined for brevity and direct explanation)
+    st.markdown("#### **Final Steps: Data Compression & The Ultimate Classifier**")
+
+        # Use metrics to summarize performance leaps
     m_col1, m_col2, m_col3 = st.columns(3)
-    m_col1.metric("Initial Baseline Accuracy", "21.0%", "-64.0% Crash Bias")
-    m_col2.metric("Production Pipeline Accuracy", "85.4%", "+64.4% Accuracy Jump")
-    m_col3.metric("Dimensional Space Reduction", "2048 → ~120 Features", "95% Variance Retained")
+    m_col1.metric("Feature Dimensions Reduced", "512 ➔ ~210", "PCA 95% Variance")
+    m_col2.metric("Tabular Data Strength", "XGBoost", "Hybrid Excellence")
+    m_col3.metric("Baseline Performance", "21% ➔ 85%+", "Augmentation & Choice")
 
-    st.markdown("---")
-    st.markdown("### 📊 Production Evaluation: Multi-Class Confusion Matrix")
-    
-    # Plotting the real confusion matrix inside the app using matplotlib
-    fig, ax = plt.subplots(figsize=(10, 8))
-    sns.heatmap(MOCK_CM, annot=True, fmt='d', cmap='Blues', xticklabels=CLASS_NAMES, yticklabels=CLASS_NAMES, ax=ax)
-    plt.title('Production Alignment Model Performance Heatmap', fontsize=12, fontweight='bold')
-    plt.xticks(rotation=45, ha='right', fontsize=9)
-    plt.yticks(fontsize=9)
-    plt.tight_layout()
-    st.pyplot(fig)
+    st.markdown("""
+        <div class='intuition-card'>
+        We had extracted brilliant features, but our matrix was still noisy and too large. We applied **Principal Component Analysis (PCA)** with a 95% variance target to perform structural data compression. We transformed 512 complex feature combinations into just ~210 critical, high-variance components, eliminating the vast majority of mathematical noise.
 
-    st.markdown("---")
-    st.markdown("### 📋 System Choice Matrix")
-    
-    # Architectural breakdown table
-    intuition_data = {
-        "Engineering Challenge": [
-            "The Luffy Anomaly (Local Minimum Collapse)",
-            "Data Leakage via PCA Preprocessing",
-            "ResNet Backbone Feature Incompatibility",
-            "High Tabular Feature Dimensions"
-        ],
-        "Why It Happened Originally": [
-            "Class imbalance (e.g., 32 Luffy samples vs 12 Naruto samples) caused the model to guess the majority class to fake an optimized loss function.",
-            "Applying PCA and scaling on the global dataset BEFORE the train/test split allowed test variances to seep into the training loop.",
-            "Standard ResNet is trained on ImageNet (real-world items like cars and dogs), rendering it blind to 2D line weights and sketch contours.",
-            "ResNet-50 outputs a giant feature layer of 2048 dimensions per image, stalling traditional Support Vector Machine margins."
-        ],
-        "The Production Correction": [
-            "Implemented strict class stratification alongside high-probability Albumentations drops during a 20-epoch multi-pass simulation loop.",
-            "Re-architected the system logic: split raw data arrays FIRST, fit standard scalers strictly on training indexes, then transform testing paths.",
-            "Unfroze deep layer convolutional modules (`layer4`) to allow filters to shift explicitly to black/white art vectors.",
-            "Integrated compressed PCA transformation blocks retaining 95% total variance, feeding optimized states directly into XGBoost."
-        ]
-    }
-    
-    df_intuition = pd.DataFrame(intuition_data)
-    st.table(df_intuition)
+        Finally, we needed a final classifier. A standard Support Vector Machine (which we tried initially) struggles on highly dimensional, tabularized deep vectors and collapsed when given the augmented complexity. We moved to **XGBoost (Extreme Gradient Boosting)** because ensemble methods handle non-linear relationships in tabular data exceptionally well. XGBoost is built for complex feature margins, allowing it to easily find the subtle abstract shapes we need to tell Elric from Goku.
+        </div>
+     """, unsafe_allow_html=True)
 
     st.markdown("---")
     st.markdown("### 🛠️ Deep Dive: The Data Augmentation Engine Blueprint")
@@ -306,5 +386,3 @@ train_transform = A.Compose([
     ToTensorV2(),
 ])
         """, language="python")
-
-print("Streamlit execution engine initialized successfully.")
