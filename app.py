@@ -276,21 +276,21 @@ with tab2:
 # TAB 3: INTERVIEW INTUITION & LOGS
 # --------------------------------------------------------------------
 with tab3:
-    st.markdown("### 🧠 Our Model's Story: The Search for Robustness")
+    st.markdown("### 🧠 Model's Story: The Search for Robustness")
             
         # Narrative explanation with a visual focus first
             
     st.markdown("""
         <div class='intuition-card'>
-        #### The Problem: A Tiny Dataset and the Threat of Overfitting
-        Our initial journey into character recognition was tough. We started with a serious disadvantage: **severe overfitting**. The first issue was class imbalance, leading to things like the 'Luffy Anomaly' where the model just guessed the most common class. But the deeper problem was our dataset size. A model can't learn abstract features from just 10-15 images; it just memorizes them. We needed to break that cycle and generate thousands of diverse training examples from our handful of originals. ####
+        The Problem: A Tiny Dataset and the Threat of Overfitting
+        initial journey into character recognition was tough. We started with a serious disadvantage: **severe overfitting**. The first issue was class imbalance, leading to things like the 'Luffy Anomaly' where the model just guessed the most common class. But the deeper problem was that the dataset size. A model can't learn abstract features from just 10-15 images; it just memorizes them. We needed to break that cycle and generate thousands of diverse training examples from handful of originals.
         </div>
         """, unsafe_allow_html=True)
 
         # 1. Image Generation 1: Data Augmentation Proof
         # I will generate a visual tool explaining the benefit of augmenting small datasets.
     st.markdown("---")
-    st.markdown("#### **🛠️ Step 1: Solving the Data Drought with Massive Augmentation** ####")
+    st.markdown("#### **🛠️ Step 1: Solving the Data Insufficiency with Massive Augmentation** ####")
 
         # Visual: Demonstrating how augmentation spreads the training distribution to overlap the test distribution.
         # Reference: improving image_2.png concepts into a clean, stylized dashboard.
@@ -303,21 +303,21 @@ with tab3:
             )
     with cols_aug_proof[1]:
             st.markdown("""
-                To fix our 'data drought,' we didn't search for more images; we 'manufactured' them. Our **20-Epoch, High-Intensity Augmentation Loop** takes a raw image and applies a chain of random transformations: strong stretching, severe color distortion, aggressive horizontal flipping, and random gray-scaling.
+                To fix 'data Insufficiency,' I didn't search for more images, 'manufactured' them. my **20-Epoch, High-Intensity Augmentation Loop** takes a raw image and applies a chain of random transformations: strong stretching, severe color distortion, aggressive horizontal flipping, and random gray-scaling.
 
-                **The value is mathematical.** In every loop, the frozen feature extractor processes a *completely unique mathematical signature*. This spreads the probability distribution of our training data, forcing the final classifier to look past simple pixels and color, and instead, find abstract, structural lines that are *actually consistent* across unseen images.
+                **The value is mathematical.** In every loop, the frozen feature extractor processes a *completely unique mathematical signature*. This spreads the probability distribution of training data, forcing the final classifier to look past simple pixels and color, and instead, find abstract, structural lines that are *actually consistent* across unseen images.
                 """)
             
     st.markdown("---")
 
         # 2. Narrative and Visual 2: Feature Extraction (ResNet)
-    st.markdown("#### **Step 2: Deep Seeing: Why we use the ResNet Backbone**")
+    st.markdown("#### **Step 2: Deep Seeing: Why I use the ResNet Backbone**")
 
     st.markdown("""
         <div class='intuition-card'>
-        With our augmented features, we needed a powerful eye to analyze them. A simple, custom CNN wouldn't work on 2D art, We needed a professional backbone, pre-trained on millions of real-world objects, that we could adapt. 
+        With augmented features, I needed a powerful eye to analyze them. A simple, custom CNN wouldn't work on 2D images, so as a professional backbone, pre-trained on millions of real-world objects, that could adapt. 
 
-        We use the deep **ResNet-18**. By freezing its complex visual weights , we adapted its advanced edge-detection and feature-extraction capability. The Backbone extracts 512 high-dimensional 'deep visual concepts' per image.
+        I use the deep **ResNet-18**. By freezing its complex visual weights and adapting its advanced edge-detection and feature-extraction capability. The Backbone extracts 512 high-dimensional 'deep visual concepts' per image.
         </div>
         """, unsafe_allow_html=True)
 
@@ -339,7 +339,7 @@ with tab3:
                 * **Middle layers** see shapes like 'circles' or 'eyes'.
                 * **Deep layers** combine everything into abstract concepts: 'spiky hair,' 'straw hat,' or 'scar'. 
                 
-                The problem, however, is that this powerful system sees too much, creating a compressed matrix that is 512 columns wide per image. That's way too noisy for our smart brain to make sense of directly.
+                The problem, however, is that this powerful system sees too much, creating a compressed matrix that is 512 columns wide per image. That's way too noisy for smart brain to make sense of directly.
                 """)
 
     st.markdown("---")
@@ -354,9 +354,9 @@ with tab3:
 
     st.markdown("""
         <div class='intuition-card'>
-        We had extracted brilliant features, but our matrix was still noisy and too large. We applied **Principal Component Analysis (PCA)** with a 95% variance target to perform structural data compression. We transformed 512 complex feature combinations into just ~210 critical, high-variance components, eliminating the vast majority of mathematical noise.
+        Even through extracting brilliant features, matrix was still noisy and too large so applied **Principal Component Analysis (PCA)** with a 95% variance target to perform structural data compression. then completely transformed 512 complex feature combinations into just ~210 critical, high-variance components, eliminating the vast majority of mathematical noise.
 
-        Finally, we needed a final classifier. A standard Support Vector Machine (which we tried initially) struggles on highly dimensional, tabularized deep vectors and collapsed when given the augmented complexity. We moved to **XGBoost (Extreme Gradient Boosting)** because ensemble methods handle non-linear relationships in tabular data exceptionally well. XGBoost is built for complex feature margins, allowing it to easily find the subtle abstract shapes we need to tell Elric from Goku.
+        Finally, with a final classifier. A standard Support Vector Machine (which tried initially) struggles on highly dimensional, tabularized deep vectors and collapsed when given the augmented complexity. I then moved to **XGBoost (Extreme Gradient Boosting)** because ensemble methods handle non-linear relationships in tabular data exceptionally well. XGBoost is built for complex feature margins, allowing it to easily find the subtle abstract shapes we need to tell (Elric) from (Goku).
         </div>
      """, unsafe_allow_html=True)
 
@@ -386,3 +386,21 @@ train_transform = A.Compose([
     ToTensorV2(),
 ])
         """, language="python")
+
+    st.markdown("---")
+    st.markdown("### 🎯 Model Evaluation: The Confusion Matrix")
+    
+    st.markdown("""
+    <div class='intuition-card'>
+    After expanding our dataset 20x and training the XGBoost classifier; needed to see exactly where model succeeds and where it struggles. 
+    
+    Below is the **Confusion Matrix** from final production test. A strong, dark diagonal line means the model is highly accurate. Any numbers outside that line show us exactly which characters share similar visual tropes and occasionally confuse the model (for example, confusing Goku's art style with Vegeta's).
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Safely load and display the confusion matrix image
+    try:
+        # Make sure to save your confusion matrix plot as 'confusion_matrix.png' in this folder
+        st.image("model/dummy_images/confusion_matrix.png", caption="Final Production Pipeline Confusion Matrix", use_container_width=True)
+    except FileNotFoundError:
+        st.warning("💡 To display the matrix, save your confusion matrix image as 'confusion_matrix.png' inside the 'model/dummy_images/' folder.")
