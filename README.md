@@ -1,4 +1,5 @@
 # 🎯 OtakuLens AI: Hybrid Deep Feature Extraction Pipeline
+LINK -> https://otakulens-ai.streamlit.app/
 
 Welcome to **OtakuLens AI**! I built this end-to-end machine learning project to tackle a notoriously difficult computer vision task: **classifying 2D 
 anime and manga characters**. 
